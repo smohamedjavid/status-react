@@ -28,13 +28,6 @@
     (= public-key (:public-key multiaccount))
     (assoc :name (:name multiaccount))))
 
-(defn- own-info
-  [db]
-  (let [{:keys [name preferred-name identicon address]} (:multiaccount db)]
-    {:name          (or preferred-name name)
-     :profile-image identicon
-     :address       address}))
-
 (fx/defn ensure-contacts
   [{:keys [db]} contacts chats]
   (let [events

@@ -42,6 +42,7 @@
             [quo.design-system.colors :as colors]
             [status-im.ui.screens.profile.visibility-status.utils :as visibility-status-utils]))
 
+(def mutual-contact-requests-enabled? true)
 ;; TOP LEVEL ===========================================================================================================
 
 (defn reg-root-key-sub [sub-name db-key]
@@ -1044,7 +1045,9 @@
  :<- [:multiaccount/public-key]
  :<- [:communities/current-community]
  :<- [:contacts/blocked-set]
- (fn [[{:keys [group-chat chat-id] :as current-chat} my-public-key community blocked-users-set]]
+ :<- [:contacts/contacts]
+ :<- [:chat/inputs]
+ (fn [[{:keys [group-chat chat-id] :as current-chat} my-public-key community blocked-users-set contacts inputs]]
    (when current-chat
      (cond-> current-chat
        (chat.models/public-chat? current-chat)
@@ -1060,7 +1063,13 @@
        (assoc :show-input? true)
 
        (not group-chat)
-       (assoc :show-input? (not (contains? blocked-users-set chat-id)))))))
+       (assoc :show-input?
+              (and
+               (or
+                (not mutual-contact-requests-enabled?)
+                (get-in inputs [chat-id :metadata :sending-contact-request])
+                (:mutual (get contacts chat-id)))
+               (not (contains? blocked-users-set chat-id))))))))
 
 (re-frame/reg-sub
  :chats/current-chat-chat-view

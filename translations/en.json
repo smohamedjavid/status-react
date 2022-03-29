@@ -1753,5 +1753,6 @@
     "disconnect": "Disconnect",
     "send-contact-request-message": "To start a chat you need to become contacts",
     "contact-request": "Contact request",
-    "say-hi": "Say hi"
+    "say-hi": "Say hi",
+    "contact-request": "Contact request"
 }

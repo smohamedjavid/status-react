@@ -37,6 +37,8 @@
             [status-im.ui.screens.chat.sheets :as sheets]
             [status-im.react-native.resources :as resources]))
 
+(def enable-mutual-contact-requests? true)
+
 (defn invitation-requests [chat-id admins]
   (let [current-pk @(re-frame/subscribe [:multiaccount/public-key])
         admin? (get admins current-pk)]
@@ -62,7 +64,7 @@
        {:color colors/blue}]
       [react/i18n-text {:style style/add-contact-text :key :add-to-contacts}]]]))
 
-(defn contact-request [public-key]
+(defn contact-request []
   (let [contact-request @(re-frame/subscribe [:chats/sending-contact-request])]
     [react/view {:style {:width "100%"
                          :justify-content :center
@@ -103,7 +105,7 @@
   [react/view {:style (style/intro-header-container loading-messages? no-messages?)
                :accessibility-label :history-chat}
    ;; Icon section
-   [react/view {:style {:margin-top    42
+   [react/view {:style {:margin-top    52
                         :margin-bottom 24}}
     [chat-icon.screen/emoji-chat-intro-icon-view
      chat-name chat-id group-chat emoji
@@ -129,8 +131,12 @@
       (str
        (i18n/label :t/empty-chat-description-one-to-one)
        contact-name)])
-   (when-not (and contact-added? no-messages?)
-     [contact-request chat-id])])
+   (when
+    (and
+     enable-mutual-contact-requests?
+     (= chat-type constants/one-to-one-chat-type)
+     (not (and contact-added? no-messages?)))
+     [contact-request])])
 
 (defn chat-intro-one-to-one [{:keys [chat-id chat-type] :as opts}]
   (let [contact-names @(re-frame/subscribe
@@ -396,18 +402,16 @@
         set-active-panel (get-set-active-panel active-panel)
         on-close #(set-active-panel nil)]
     (fn []
-      (let [{:keys [chat-id chat-type show-input? group-chat admins invitation-admin] :as chat}
+      (let [{:keys [chat-id show-input? group-chat admins invitation-admin] :as chat}
             ;;we want to react only on these fields, do not use full chat map here
             @(re-frame/subscribe [:chats/current-chat-chat-view])
-            needs-contact-request? (and (= chat-type constants/one-to-one-chat-type)
-                                        @(re-frame/subscribe [:contacts/contact-added? chat-id]))
             max-bottom-space (max @bottom-space @panel-space)]
         [:<>
          [connectivity/loading-indicator]
          (when chat-id
            (if group-chat
              [invitation-requests chat-id admins]
-             [add-contact-bar chat-id]))
+             (when-not enable-mutual-contact-requests? [add-contact-bar chat-id])))
          ;;MESSAGES LIST
          [messages-view {:chat          chat
                          :bottom-space  max-bottom-space

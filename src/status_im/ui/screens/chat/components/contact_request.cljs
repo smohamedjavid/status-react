@@ -4,8 +4,6 @@
             [quo.react-native :as rn]
             [quo.design-system.colors :as quo.colors]
             [status-im.i18n.i18n :as i18n]
-            [quo.components.animated.pressable :as pressable]
-            [status-im.ui.components.icons.icons :as icons]
             [status-im.ethereum.stateofus :as stateofus]
             [status-im.ui.screens.chat.components.style :as styles]
             [re-frame.core :as re-frame]
@@ -47,9 +45,8 @@
              literal))
          parsed-text)))
 
-(defn contact-request-message [{:keys [from]}]
-  (let [contact-name       @(re-frame/subscribe [:contacts/contact-name-by-identity from])
-        current-public-key @(re-frame/subscribe [:multiaccount/public-key])]
+(defn contact-request-message [their-public-key]
+  (let [{:keys [input-text]} @(re-frame/subscribe [:chats/current-chat-inputs])]
     [rn/view {:style {:flex-direction :row}}
      [rn/view {:style (styles/contact-request-content)}
       [quo/button {:type     :secondary
@@ -57,12 +54,14 @@
                    :number-of-lines 1
                    :style           {:line-height 18}
                    :on-press #(re-frame/dispatch [:chat.ui/cancel-contact-request])}
-       "Cancel"]
+       (i18n/label :t/cancel)]
       [quo/button {:type     :secondary
-                   :weight          :medium
+                   :disabled (string/blank? input-text)
+                   :weight   :medium
                    :after :main-icons/send
+                   :on-press #(re-frame/dispatch [:contacts/send-contact-request their-public-key input-text])
                    :style           {:line-height 18}}
-       "Send request"]]]))
+       (i18n/label :t/send-request)]]]))
 
 (defn focus-input-on-contact-request [contact-request had-contact-request text-input-ref]
   ;;when we show contact-request we focus input

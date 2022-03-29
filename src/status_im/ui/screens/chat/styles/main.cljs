@@ -53,8 +53,7 @@
     {:flex               1
      :flex-direction     :column
      :justify-content    :center
-     :align-items        :center
-     :height             324}
+     :align-items        :center}
     {:flex               1
      :flex-direction     :column
      :justify-content    :center

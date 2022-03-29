@@ -180,8 +180,9 @@
             (i18n/label :t/empty-pending-invitations-descr)])]]])))
 
 (defview group-chat-profile []
-  (letsubs [{:keys [admins chat-id joined? chat-name color contacts] :as current-chat} [:chats/current-chat]
+  (letsubs [{:keys [admins chat-id chat-name color contacts] :as current-chat} [:chats/current-chat]
             members         [:contacts/current-chat-contacts]
+            joined?         [:chats/current-chat-joined?]
             current-pk      [:multiaccount/public-key]
             pinned-messages [:chats/pinned chat-id]]
     (when current-chat
