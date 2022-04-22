@@ -1,4 +1,4 @@
-library 'status-jenkins-lib@v1.4.2'
+library 'status-jenkins-lib@build-unsigned-android'
 
 pipeline {
   agent { label 'linux && x86_64 && nix-2.8' }
@@ -81,6 +81,11 @@ pipeline {
               script { apks = android.bundle() }
             }
           }
+          stage('Sign') {
+            steps {
+              script { apks = android.sign(apks) }
+            }
+          }
         } }
       }
     }
@@ -103,6 +108,7 @@ pipeline {
               }
               jenkins.setBuildDesc(APK: env.PKG_URL)
               /* e2e builds get tested in SauceLabs */
+              println(env.APK_PATHS)
               if (utils.isE2EBuild()) {
                 env.SAUCE_URL = android.uploadToSauceLabs()
               }

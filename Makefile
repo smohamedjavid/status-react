@@ -190,25 +190,28 @@ xcode-clean: ##@prepare Clean XCode derived data and archives
 #----------------
 release: release-android release-ios ##@build Build release for Android and iOS
 
-release-android: export BUILD_ENV ?= prod
-release-android: export BUILD_TYPE ?= nightly
-release-android: export BUILD_NUMBER ?= $(TMP_BUILD_NUMBER)
+build-android: SHELL := /bin/sh
+build-android: export BUILD_ENV ?= prod
+build-android: export BUILD_TYPE ?= nightly
+build-android: export BUILD_NUMBER ?= $(TMP_BUILD_NUMBER)
+build-android: export ANDROID_ABI_SPLIT ?= false
+build-android: export ANDROID_ABI_INCLUDE ?= armeabi-v7a;arm64-v8a;x86
+build-android: ##@build Build unsigned Android APK
+	@scripts/build-android.sh
+
+release-android: export TARGET := keytool
 release-android: export KEYSTORE_PATH ?= $(HOME)/.gradle/status-im.keystore
-release-android: export ANDROID_APK_SIGNED ?= true
-release-android: export ANDROID_ABI_SPLIT ?= false
-release-android: export ANDROID_ABI_INCLUDE ?= armeabi-v7a;arm64-v8a;x86
-release-android: keystore ##@build Build release for Android
-	scripts/release-android.sh
+release-android: keystore build-android ##@build Build signed Android APK
+	@scripts/sign-android.sh result/app-release-unsigned.apk
 
 release-fdroid: export BUILD_ENV = prod
 release-fdroid: export BUILD_TYPE = release
-release-fdroid: export ANDROID_APK_SIGNED = false
 release-fdroid: export ANDROID_ABI_SPLIT = false
 release-fdroid: export ANDROID_ABI_INCLUDE = armeabi-v7a;arm64-v8a;x86;x86_64
 release-fdroid: export READER_FEATURES = google-free
 release-fdroid: ##@build Build release for F-Droid
-	scripts/google-free.sh
-	scripts/release-android.sh
+	@scripts/google-free.sh
+	@scripts/build-android.sh
 
 release-ios: export TARGET := ios
 release-ios: export BUILD_ENV ?= prod
