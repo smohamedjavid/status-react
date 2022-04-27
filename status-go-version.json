@@ -3,7 +3,7 @@
     "_comment": "Instead use: scripts/update-status-go.sh <rev>",
     "owner": "status-im",
     "repo": "status-go",
-    "version": "a244d776571cc73ea34d7a700cc5db36166ce832",
-    "commit-sha1": "a244d776571cc73ea34d7a700cc5db36166ce832",
-    "src-sha256": "1v057jy565y9178ja8j9j6sg04z83y7a0bnry6ziy9zf2zda7nkg"
+    "version": "feat/wallet-sync-rebase",
+    "commit-sha1": "2ce206152683fabad7ab2e2b5d14b3239472b49f",
+    "src-sha256": "1xlbs7hw17pbyf9q4vq9k69l8gywlqvwkj0dqgbfbgqs4a24irx1"
 }

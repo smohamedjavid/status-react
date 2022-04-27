@@ -19,9 +19,11 @@
             [status-im.utils.types :as types]
             [status-im.constants :as constants]
             [status-im.multiaccounts.model :as multiaccounts.model]
+            [status-im.multiaccounts.login.core :as multiaccounts.login]
             [status-im.notifications-center.core :as notifications-center]
             [status-im.visibility-status-updates.core :as models.visibility-status-updates]
             [status-im.browser.core :as browser]
+            [taoensso.timbre :as log]
             [clojure.string :as string]))
 
 (fx/defn process-next
@@ -51,7 +53,9 @@
         ^js settings                   (.-settings response-js)
         ^js cleared-histories          (.-clearedHistories response-js)
         ^js identity-images            (.-identityImages response-js)
+        ^js accounts                   (.-accounts response-js)
         sync-handler                   (when-not process-async process-response)]
+    (log/info "### Accounts" (types/js->clj accounts))
     (cond
 
       (seq chats)
@@ -158,6 +162,13 @@
                   (process-next response-js sync-handler)
                   (models.visibility-status-updates/handle-visibility-status-updates
                    visibility-status-updates-clj)))
+
+      (seq accounts)
+      (do
+        (js-delete response-js "accounts")
+        (fx/merge cofx
+                  (process-next response-js sync-handler)
+                  (multiaccounts.login/update-wallet-accounts (types/js->clj accounts))))
 
       (seq settings)
       (do
