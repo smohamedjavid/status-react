@@ -276,6 +276,7 @@
 (reg-root-key-sub :wallet-connect/sessions :wallet-connect/sessions)
 (reg-root-key-sub :wallet-connect-legacy/sessions :wallet-connect-legacy/sessions)
 (reg-root-key-sub :wallet-connect/session-managed :wallet-connect/session-managed)
+(reg-root-key-sub :contact-requests/pending :contact-requests/pending)
 
 (re-frame/reg-sub
  :communities
@@ -953,6 +954,14 @@
  (fn [ui-props [_ prop]]
    (get ui-props prop)))
 
+
+(re-frame/reg-sub
+ :chats/current-chat-contact
+ :<- [:contacts/contacts]
+ :<- [:chats/current-chat-id]
+ (fn [[contacts current-chat-id]]
+   (get contacts current-chat-id)))
+
 (re-frame/reg-sub
  :chats/home-list-chats
  :<- [::chats]
@@ -1068,7 +1077,8 @@
                (or
                 (not mutual-contact-requests-enabled?)
                 (get-in inputs [chat-id :metadata :sending-contact-request])
-                (:mutual (get contacts chat-id)))
+                (and (get-in contacts [chat-id :added])
+                     (get-in contacts [chat-id :has-added-us])))
                (not (contains? blocked-users-set chat-id))))))))
 
 (re-frame/reg-sub
@@ -1926,6 +1936,7 @@
          (filter (fn [{:keys [type last-message]}]
                    (or (and (= constants/activity-center-notification-type-one-to-one-chat type)
                             (not (nil? last-message)))
+                       (= constants/activity-center-notification-type-contact-request type)
                        (= constants/activity-center-notification-type-private-group-chat type)
                        (= constants/activity-center-notification-type-reply type)
                        (= constants/activity-center-notification-type-mention type)))

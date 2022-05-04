@@ -8,16 +8,27 @@
 (fx/defn handle-activities [{:keys [db]} activities]
   (let [{:keys [unread-count notifications]}
         (reduce (fn [acc {:keys [read dismissed accepted] :as notification}]
-                  (as-> acc a
-                    (if read
-                      (update a :unread-count dec)
-                      (update a :unread-count inc))
+                  (let [index-existing (->> (map-indexed vector (:notifications acc))
+                                            (filter (fn [[idx {:keys [id]}]] (= id (:id notification))))
+                                            first
+                                            first)]
+                    (as-> acc a
+                      (if read
+                        (update a :unread-count dec)
+                        (update a :unread-count inc))
 
-                    (if (or dismissed accepted)
-                      (update a :notifications (fn [items] (remove #(= (:id notification) (:id %)) items)))
-                      (update a :notifications conj notification))))
+                      (if index-existing
+                        (if (or dismissed accepted)
+                          ;; Remove at specific location
+                          (assoc a :notifications
+                                 (into (subvec (:notifications a) 0 index-existing) (subvec (:notifications a) (inc index-existing))))
+                          ;; Replace element
+                          (do
+                            (println (:notifications a))
+                            (assoc-in a [:notifications index-existing] notification)))
+                        (update a :notifications conj notification)))))
                 {:unread-count (get db :activity.center/notifications-count 0)
-                 :notifications (get-in db [:activity.center/notifications :notifications])}
+                 :notifications (into [] (get-in db [:activity.center/notifications :notifications]))}
                 activities)]
     (merge
      {:db (-> db
@@ -170,4 +181,3 @@
            (update-in [:activity.center/notifications :notifications]
                       concat
                       (map data-store.activities/<-rpc notifications)))})
-

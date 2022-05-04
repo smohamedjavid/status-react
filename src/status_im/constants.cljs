@@ -29,6 +29,10 @@
 (def ^:const timeline-chat-type 5)
 (def ^:const community-chat-type 6)
 
+(def ^:const contact-request-state-pending 1)
+(def ^:const contact-request-state-accepted 2)
+(def ^:const contact-request-state-declined 3)
+
 (def request-to-join-pending-state 1)
 
 (def reactions {emoji-reaction-love        (:love resources/reactions)
@@ -164,6 +168,7 @@
 (def ^:const activity-center-notification-type-private-group-chat 2)
 (def ^:const activity-center-notification-type-mention 3)
 (def ^:const activity-center-notification-type-reply 4)
+(def ^:const activity-center-notification-type-contact-request 5)
 
 (def ^:const visibility-status-unknown 0)
 (def ^:const visibility-status-automatic 1)
