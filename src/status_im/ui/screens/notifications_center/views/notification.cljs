@@ -33,6 +33,7 @@
         {:keys [community-id]} (<sub [:chat-by-id chat-id])
         {:keys [name]} @(re-frame/subscribe [:communities/community community-id])
         contact (when message @(re-frame/subscribe [:contacts/contact-by-identity (message :from)]))
+        title-text-width (* @(re-frame/subscribe [:dimensions/window-width]) 0.62)
         sender (when message (first @(re-frame/subscribe [:contacts/contact-two-names-by-identity (message :from)])))]
     [react/view
      [react/touchable-opacity (merge {:style (styles/notification-container read)} opts)
@@ -61,7 +62,7 @@
                   :accessibility-label :chat-name-or-sender-text
                   :ellipsize-mode      :tail
                   :number-of-lines     1
-                  :style               styles/title-text}
+                  :style               (styles/title-text title-text-width)}
         (if (or
              (= type constants/activity-center-notification-type-mention)
              (= type constants/activity-center-notification-type-contact-request)
