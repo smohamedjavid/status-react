@@ -47,7 +47,7 @@
 
 (defview mention-element [from]
   (letsubs [contact-name [:contacts/contact-name-by-identity from]]
-    contact-name))
+           contact-name))
 
 (def edited-at-text (str " ⌫ " (i18n/label :t/edited)))
 
@@ -87,25 +87,25 @@
 (defview quoted-message
   [_ {:keys [from parsed-text image]} outgoing current-public-key public? pinned]
   (letsubs [contact-name [:contacts/contact-name-by-identity from]]
-    [react/view {:style (style/quoted-message-container (and outgoing (not pinned)))}
-     [react/view {:style style/quoted-message-author-container}
-      [chat.utils/format-reply-author
-       from
-       contact-name
-       current-public-key
-       (partial style/quoted-message-author (and outgoing (not pinned)))
-       (and outgoing (not pinned))]]
-     (if (and image
+           [react/view {:style (style/quoted-message-container (and outgoing (not pinned)))}
+            [react/view {:style style/quoted-message-author-container}
+             [chat.utils/format-reply-author
+              from
+              contact-name
+              current-public-key
+              (partial style/quoted-message-author (and outgoing (not pinned)))
+              (and outgoing (not pinned))]]
+            (if (and image
               ;; Disabling images for public-chats
-              (not public?))
-       [react/fast-image {:style  {:width            56
-                                   :height           56
-                                   :background-color :black
-                                   :border-radius    4}
-                          :source {:uri image}}]
-       [react/text {:style           (style/quoted-message-text (and outgoing (not pinned)))
-                    :number-of-lines 5}
-        (components.reply/get-quoted-text-with-mentions parsed-text)])]))
+                     (not public?))
+              [react/fast-image {:style  {:width            56
+                                          :height           56
+                                          :background-color :black
+                                          :border-radius    4}
+                                 :source {:uri image}}]
+              [react/text {:style           (style/quoted-message-text (and outgoing (not pinned)))
+                           :number-of-lines 5}
+               (components.reply/get-quoted-text-with-mentions parsed-text)])]))
 
 (defn render-inline [message-text outgoing pinned content-type acc {:keys [type literal destination]}]
   (case type
@@ -268,42 +268,42 @@
 
 (defview message-author-name [from opts]
   (letsubs [contact-with-names [:contacts/contact-by-identity from]]
-    (chat.utils/format-author contact-with-names opts)))
+           (chat.utils/format-author contact-with-names opts)))
 
 (defview message-my-name [opts]
   (letsubs [contact-with-names [:multiaccount/contact]]
-    (chat.utils/format-author contact-with-names opts)))
+           (chat.utils/format-author contact-with-names opts)))
 
 (defview community-content [{:keys [community-id] :as message}]
   (letsubs [{:keys [name description verified] :as community} [:communities/community community-id]
             communities-enabled? [:communities/enabled?]]
-    (when (and communities-enabled? community)
-      [react/view {:style (assoc (style/message-wrapper message)
-                                 :margin-vertical 10
-                                 :margin-left 8
-                                 :width 271)}
-       (when verified
-         [react/view (style/community-verified)
-          [react/text {:style {:font-size 13
-                               :color colors/blue}} (i18n/label :t/communities-verified)]])
-       [react/view (style/community-message verified)
-        [react/view {:width 62
-                     :padding-left 14}
-         (if (= community-id constants/status-community-id)
-           [react/image {:source (resources/get-image :status-logo)
-                         :style {:width 40
-                                 :height 40}}]
-           [communities.icon/community-icon community])]
-        [react/view {:padding-right 14 :flex 1}
-         [react/text {:style {:font-weight "700" :font-size 17}}
-          name]
-         [react/text description]]]
-       [react/view (style/community-view-button)
-        [react/touchable-highlight {:on-press #(re-frame/dispatch [:navigate-to
-                                                                   :community
-                                                                   {:community-id (:id community)}])}
-         [react/text {:style {:text-align :center
-                              :color colors/blue}} (i18n/label :t/view)]]]])))
+           (when (and communities-enabled? community)
+             [react/view {:style (assoc (style/message-wrapper message)
+                                        :margin-vertical 10
+                                        :margin-left 8
+                                        :width 271)}
+              (when verified
+                [react/view (style/community-verified)
+                 [react/text {:style {:font-size 13
+                                      :color colors/blue}} (i18n/label :t/communities-verified)]])
+              [react/view (style/community-message verified)
+               [react/view {:width 62
+                            :padding-left 14}
+                (if (= community-id constants/status-community-id)
+                  [react/image {:source (resources/get-image :status-logo)
+                                :style {:width 40
+                                        :height 40}}]
+                  [communities.icon/community-icon community])]
+               [react/view {:padding-right 14 :flex 1}
+                [react/text {:style {:font-weight "700" :font-size 17}}
+                 name]
+                [react/text description]]]
+              [react/view (style/community-view-button)
+               [react/touchable-highlight {:on-press #(re-frame/dispatch [:navigate-to
+                                                                          :community
+                                                                          {:community-id (:id community)}])}
+                [react/text {:style {:text-align :center
+                                     :color colors/blue}} (i18n/label :t/view)]]]])))
 
 (defn message-content-wrapper
   "Author, userpic and delivery wrapper"
@@ -616,15 +616,46 @@
                 [message.audio/message-content message] [message-status message]]]]]
             reaction-picker])))
 
-(defn contact-request-status-label []
+(defn contact-request-status-pending []
   [react/view {:style {:flex-direction :row}}
    [quo/text {:style  {:margin-right 5.27}
               :weight :medium
               :color :secondary}
-    "Pending..."]
+    (i18n/label :t/contact-request-pending)]
    [react/activity-indicator {:animating true
                               :size      :small
                               :color     colors/gray}]])
+
+(defn contact-request-status-accepted []
+  [quo/text {:style  {:color colors/green}
+             :weight :medium}
+   (i18n/label :t/contact-request-accepted)])
+
+(defn contact-request-status-declined []
+  [quo/text {:style  {:color colors/red}
+             :weight :medium}
+   (i18n/label :t/contact-request-declined)])
+
+(defn contact-request-status-label [state]
+  [react/view {:style {:width 136
+                       :border-radius 8
+                       :flex 1
+                       :justify-content :center
+                       :align-items :center
+                       :background-color (when (= :retry state)
+                                           colors/blue-light)
+                       :border-width 1
+                       :border-color (case state
+                                       constants/contact-request-state-accepted colors/green-transparent-10
+                                       constants/contact-request-state-declined colors/red-light
+                                       constants/contact-request-state-pending colors/gray-lighter)
+                       :padding-vertical 10
+                       :padding-horizontal 16}}
+
+   (case state
+     constants/contact-request-state-pending  [contact-request-status-pending]
+     constants/contact-request-state-accepted [contact-request-status-accepted]
+     constants/contact-request-state-declined [contact-request-status-declined])])
 
 (defmethod ->message constants/content-type-contact-request
   [{:keys [outgoing] :as message} _]
@@ -650,13 +681,7 @@
     [quo/text {:style {:margin-top 2
                        :margin-bottom 14}}
      (get-in message [:content :text])]]
-   [react/view {:style {:width 136
-                        :border-radius 8
-                        :border-width 1
-                        :border-color colors/gray-lighter
-                        :padding-vertical 10
-                        :padding-horizontal 16}}
-    [contact-request-status-label]]])
+   [contact-request-status-label (:contact-request-state message)]])
 
 (defmethod ->message :default [message]
   [message-content-wrapper message

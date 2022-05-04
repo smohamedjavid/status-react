@@ -31,6 +31,7 @@
             [taoensso.timbre :as log]
             [status-im.data-store.invitations :as data-store.invitations]
             [status-im.chat.models.link-preview :as link-preview]
+            [status-im.chat.models :as chat.models]
             [status-im.utils.mobile-sync :as utils.mobile-sync]
             [status-im.async-storage.core :as async-storage]
             [status-im.notifications-center.core :as notifications-center]
