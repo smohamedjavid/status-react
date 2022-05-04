@@ -11,7 +11,6 @@
                                 :ensVerified :ens-verified
                                 :ensVerificationRetries :ens-verification-retries
                                 :hasAddedUs :has-added-us
-                                :contactRequestState :contact-request-state
                                 :lastENSClockValue :last-ens-clock-value
                                 :lastUpdated :last-updated
                                 :localNickname :nickname})

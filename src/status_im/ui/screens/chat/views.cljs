@@ -135,10 +135,7 @@
     (and
      enable-mutual-contact-requests?
      (= chat-type constants/one-to-one-chat-type)
-     (or
-      (= contact-request-state constants/contact-request-state-none)
-      (= contact-request-state constants/contact-request-state-received)
-      (= contact-request-state constants/contact-request-state-dismissed)))
+     (not (and contact-added? no-messages?)))
      [contact-request])])
 
 (defn chat-intro-one-to-one [{:keys [chat-id chat-type] :as opts}]
