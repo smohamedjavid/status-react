@@ -67,11 +67,10 @@
    :top      (if has-header? 37 12)
    :left     16})
 
-(defn title-text [title-text-width]
+(def title-text
   {:margin-left  72
    :margin-top   12
-   :margin-right 50
-   :width title-text-width})
+   :margin-right 50})
 
 (def notification-message-container
   {:margin-left  72
