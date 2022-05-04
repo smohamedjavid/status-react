@@ -15,6 +15,12 @@
 (def ^:const content-type-gap 10)
 (def ^:const content-type-contact-request 11) ;; TODO: temp, will be removed
 
+(def ^:const contact-request-state-none 0)
+(def ^:const contact-request-state-mutual 1)
+(def ^:const contact-request-state-sent 2)
+(def ^:const contact-request-state-received 3)
+(def ^:const contact-request-state-dismissed 4)
+
 (def ^:const emoji-reaction-love 1)
 (def ^:const emoji-reaction-thumbs-up  2)
 (def ^:const emoji-reaction-thumbs-down  3)
