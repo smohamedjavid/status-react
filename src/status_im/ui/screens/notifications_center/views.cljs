@@ -33,11 +33,7 @@
          {:on-press      (fn []
                            (if @selecting
                              (on-change)
-                             ;; We don't dispatch on contact requests unless
-                             ;; accepted
-                             (when (or (not= type constants/activity-center-notification-type-contact-request)
-                                       (= constants/contact-request-state-accepted (get-in home-item [:message :contact-request-state])))
-                               (re-frame/dispatch [:accept-activity-center-notification-and-open-chat id]))))
+                             (re-frame/dispatch [:accept-activity-center-notification-and-open-chat id])))
           :on-long-press #(do (reset! selecting true)
                               (when-not (= type constants/activity-center-notification-type-mention) (swap! selected-items conj id)))}]]])))
 (defn filter-item []

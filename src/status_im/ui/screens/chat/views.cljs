@@ -135,7 +135,7 @@
     (and
      enable-mutual-contact-requests?
      (= chat-type constants/one-to-one-chat-type)
-     (not contact-added?))
+     (not (and contact-added? no-messages?)))
      [contact-request])])
 
 (defn chat-intro-one-to-one [{:keys [chat-id chat-type] :as opts}]
@@ -341,48 +341,40 @@
      :in-pinned-view?     in-pinned-view?}))
 
 (defn messages-view [{:keys [chat bottom-space pan-responder space-keeper show-input?]}]
-  (let [{:keys [group-chat chat-type chat-id public? community-id admins]} chat
-        messages @(re-frame/subscribe [:chats/raw-chat-messages-stream chat-id])
-        contact-added? @(re-frame/subscribe [:contacts/contact-added? chat-id])]
-    (let [should-send-contact-request?
-          (and
-           enable-mutual-contact-requests?
-           (= chat-type constants/one-to-one-chat-type)
-           (not contact-added?))]
-
-      ;;do not use anonymous functions for handlers
-      [list/flat-list
-       (merge
-        pan-responder
-        {:key-fn                       list-key-fn
-         :ref                          list-ref
-         :header                       [list-header chat]
-         :footer                       [list-footer chat]
-         :data                         (when-not should-send-contact-request?
-                                         messages)
-         :render-data                  (get-render-data {:group-chat      group-chat
-                                                         :chat-id         chat-id
-                                                         :public?         public?
-                                                         :community-id    community-id
-                                                         :admins          admins
-                                                         :space-keeper    space-keeper
-                                                         :show-input?     show-input?
-                                                         :edit-enabled    true
-                                                         :in-pinned-view? false})
-         :render-fn                    render-fn
-         :on-viewable-items-changed    on-viewable-items-changed
-         :on-end-reached               list-on-end-reached
-         :on-scroll-to-index-failed    identity              ;;don't remove this
-         :content-container-style      {:padding-top (+ bottom-space 16)
-                                        :padding-bottom 16}
-         :scroll-indicator-insets      {:top bottom-space}    ;;ios only
-         :keyboard-dismiss-mode        :interactive
-         :keyboard-should-persist-taps :handled
-         :onMomentumScrollBegin        state/start-scrolling
-         :onMomentumScrollEnd          state/stop-scrolling
-         ;;TODO https://github.com/facebook/react-native/issues/30034
-         :inverted                     (when platform/ios? true)
-         :style                        (when platform/android? {:scaleY -1})})])))
+  (let [{:keys [group-chat chat-id public? community-id admins]} chat
+        messages @(re-frame/subscribe [:chats/raw-chat-messages-stream chat-id])]
+    ;;do not use anonymous functions for handlers
+    [list/flat-list
+     (merge
+      pan-responder
+      {:key-fn                       list-key-fn
+       :ref                          list-ref
+       :header                       [list-header chat]
+       :footer                       [list-footer chat]
+       :data                         messages
+       :render-data                  (get-render-data {:group-chat      group-chat
+                                                       :chat-id         chat-id
+                                                       :public?         public?
+                                                       :community-id    community-id
+                                                       :admins          admins
+                                                       :space-keeper    space-keeper
+                                                       :show-input?     show-input?
+                                                       :edit-enabled    true
+                                                       :in-pinned-view? false})
+       :render-fn                    render-fn
+       :on-viewable-items-changed    on-viewable-items-changed
+       :on-end-reached               list-on-end-reached
+       :on-scroll-to-index-failed    identity              ;;don't remove this
+       :content-container-style      {:padding-top (+ bottom-space 16)
+                                      :padding-bottom 16}
+       :scroll-indicator-insets      {:top bottom-space}    ;;ios only
+       :keyboard-dismiss-mode        :interactive
+       :keyboard-should-persist-taps :handled
+       :onMomentumScrollBegin        state/start-scrolling
+       :onMomentumScrollEnd          state/stop-scrolling
+       ;;TODO https://github.com/facebook/react-native/issues/30034
+       :inverted                     (when platform/ios? true)
+       :style                        (when platform/android? {:scaleY -1})})]))
 
 (defn topbar-button []
   (re-frame/dispatch [:bottom-sheet/show-sheet

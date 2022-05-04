@@ -1754,11 +1754,5 @@
     "send-contact-request-message": "To start a chat you need to become contacts",
     "contact-request": "Contact request",
     "say-hi": "Say hi",
-    "accepted": "Accepted",
-    "declined": "Declined",
-    "contact-request": "Contact request",
-    "contact-request-header": "👋  Contact requests",
-    "contact-request-declined": "Declined ⓧ",
-    "contact-request-accepted": "Accepted ✓",
-    "contact-request-pending": "Pending..."
+    "contact-request": "Contact request"
 }

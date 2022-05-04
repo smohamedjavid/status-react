@@ -2,8 +2,6 @@
   (:require [status-im.ui.components.react :as react]
             [re-frame.core :as re-frame]
             [quo.core :as quo]
-            [quo.components.animated.pressable :as animation]
-            [status-im.i18n.i18n :as i18n]
             [status-im.ui.screens.notifications-center.styles :as styles]
             [status-im.utils.handlers :refer [<sub]]
             [status-im.ui.screens.chat.photos :as photos]
@@ -14,18 +12,6 @@
             [status-im.ui.screens.home.views.inner-item :as home-item]
             [status-im.ui.components.chat-icon.screen :as chat-icon.screen]
             [status-im.ui.components.chat-icon.styles :as chat-icon.styles]))
-
-(defn contact-request-actions [request-id]
-  [react/view {:flex-direction :row}
-   [animation/pressable {:on-press #(re-frame/dispatch [:contact-requests.ui/accept-request request-id])}
-    [icons/icon :main-icons/checkmark-circle {:width 35
-                                              :height 35
-                                              :color colors/green}]]
-   [animation/pressable {:on-press #(re-frame/dispatch [:contact-requests.ui/decline-request request-id])}
-    [icons/icon :main-icons/cancel {:width 35
-                                    :height 35
-                                    :container-style {:margin-left 16}
-                                    :color colors/red}]]])
 
 (defn activity-text-item [home-item opts]
   (let [{:keys [chat-id chat-name message last-message reply-message muted read group-chat timestamp type color]} home-item

@@ -88,27 +88,8 @@
   {:db (assoc-in db [:contacts/contacts public-key :added] false)
    ::json-rpc/call [{:method "wakuext_removeContact"
                      :params [public-key]
-                     :on-success #(log/debug "contact removed successfully")}
-                    {:method "wakuext_retractContactRequest"
-                     :params [{:contactId public-key}]
                      :on-success #(log/debug "contact removed successfully")}]
    :dispatch [:offload-messages constants/timeline-chat-id]})
-
-(fx/defn accept-contact-request
-  {:events [:contact-requests.ui/accept-request]}
-  [{:keys [db]} id]
-  {::json-rpc/call [{:method "wakuext_acceptContactRequest"
-                     :params [{:id id}]
-                     :js-response true
-                     :on-success #(re-frame/dispatch [:sanitize-messages-and-process-response %])}]})
-
-(fx/defn decline-contact-request
-  {:events [:contact-requests.ui/decline-request]}
-  [{:keys [db]} id]
-  {::json-rpc/call [{:method "wakuext_declineContactRequest"
-                     :params [{:id id}]
-                     :js-response true
-                     :on-success #(re-frame/dispatch [:sanitize-messages-and-process-response %])}]})
 
 (fx/defn initialize-contacts [cofx]
   (contacts-store/fetch-contacts-rpc cofx #(re-frame/dispatch [::contacts-loaded %])))
