@@ -100,6 +100,7 @@
                           color
                           loading-messages?
                           no-messages?
+                          contact-request-state
                           emoji
                           contact-added?]}]
   [react/view {:style (style/intro-header-container loading-messages? no-messages?)
@@ -135,14 +136,22 @@
     (and
      enable-mutual-contact-requests?
      (= chat-type constants/one-to-one-chat-type)
-     (not contact-added?))
+     (or
+      (= contact-request-state constants/contact-request-state-none)
+      (= contact-request-state constants/contact-request-state-received)
+      (= contact-request-state constants/contact-request-state-dismissed)))
      [contact-request])])
 
 (defn chat-intro-one-to-one [{:keys [chat-id chat-type] :as opts}]
-  (let [contact-names @(re-frame/subscribe
+  (let [contact       @(re-frame/subscribe
+                        [:contacts/contact-by-identity chat-id])
+        contact-names @(re-frame/subscribe
                         [:contacts/contact-two-names-by-identity chat-id])]
+    (println "CONTACT" contact)
     [chat-intro (assoc opts
                        :contact-name (first contact-names)
+                       :contact-request-state (or (:contact-request-state contact)
+                                                  constants/contact-request-state-none)
                        :contact-added? (and (= chat-type constants/one-to-one-chat-type)
                                             @(re-frame/subscribe [:contacts/contact-added? chat-id])))]))
 
@@ -342,12 +351,14 @@
 
 (defn messages-view [{:keys [chat bottom-space pan-responder space-keeper show-input?]}]
   (let [{:keys [group-chat chat-type chat-id public? community-id admins]} chat
+
         messages @(re-frame/subscribe [:chats/raw-chat-messages-stream chat-id])
-        contact-added? @(re-frame/subscribe [:contacts/contact-added? chat-id])]
+        one-to-one?   (= chat-type constants/one-to-one-chat-type)
+        contact-added? (when one-to-one? @(re-frame/subscribe [:contacts/contact-added? chat-id]))]
     (let [should-send-contact-request?
           (and
            enable-mutual-contact-requests?
-           (= chat-type constants/one-to-one-chat-type)
+           one-to-one?
            (not contact-added?))]
 
       ;;do not use anonymous functions for handlers

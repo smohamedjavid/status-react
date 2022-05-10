@@ -1760,5 +1760,6 @@
     "contact-request-header": "👋  Contact requests",
     "contact-request-declined": "Declined ⓧ",
     "contact-request-accepted": "Accepted ✓",
-    "contact-request-pending": "Pending..."
+    "contact-request-pending": "Pending...",
+    "removed-from-contacts": "Removed from contacts"
 }

@@ -85,7 +85,9 @@
   "Remove a contact from current account's contact list"
   {:events [:contact.ui/remove-contact-pressed]}
   [{:keys [db]} {:keys [public-key]}]
-  {:db (assoc-in db [:contacts/contacts public-key :added] false)
+  {:db (-> db
+           (assoc-in [:contacts/contacts public-key :added] false)
+           (assoc-in [:contacts/contacts public-key :contact-request-state] constants/contact-request-state-none))
    ::json-rpc/call [{:method "wakuext_removeContact"
                      :params [public-key]
                      :on-success #(log/debug "contact removed successfully")}

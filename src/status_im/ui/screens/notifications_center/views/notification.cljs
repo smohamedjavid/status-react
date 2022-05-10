@@ -38,8 +38,15 @@
     [react/view
      [react/touchable-opacity (merge {:style (styles/notification-container read)} opts)
       [react/view
-       [react/view {:style {:padding-horizontal 20}}
-        [quo/text {:weight :bold} (i18n/label :t/contact-request)]]
+       (when (or
+              (= type constants/activity-center-notification-type-contact-request)
+              (= type constants/activity-center-notification-type-contact-request-retracted))
+         [react/view {:style {:padding-horizontal 20}}
+          [quo/text {:weight :bold}
+           (if
+            (= type constants/activity-center-notification-type-contact-request)
+             (i18n/label :t/contact-request)
+             (i18n/label :t/removed-from-contacts))]])
        (if (or
             (= type constants/activity-center-notification-type-mention)
             (= type constants/activity-center-notification-type-contact-request)
@@ -66,6 +73,7 @@
         (if (or
              (= type constants/activity-center-notification-type-mention)
              (= type constants/activity-center-notification-type-contact-request)
+             (= type constants/activity-center-notification-type-contact-request-retracted)
              (= type constants/activity-center-notification-type-reply))
           sender
           [home-item/chat-item-title chat-id muted group-chat chat-name])]
@@ -75,7 +83,8 @@
        ;;TODO (perf) move to event
         (home-item/memo-timestamp timestamp)]
        [react/view {:style styles/notification-message-container}
-        [home-item/message-content-text (select-keys message [:content :content-type :community-id]) false]
+        (when-not (= type constants/activity-center-notification-type-contact-request-retracted)
+          [home-item/message-content-text (select-keys message [:content :content-type :community-id]) false])
         (cond (= type constants/activity-center-notification-type-mention)
               [react/view {:style styles/group-info-container
                            :accessibility-label :chat-name-container}
@@ -111,13 +120,14 @@
                  :height 18
                  :container-style styles/reply-icon}]
                [home-item/message-content-text (select-keys reply-message [:content :content-type :community-id]) false]])]]]
-     [react/view {:style {:margin-right 20
-                          :margin-top 10
-                          :align-self :flex-end}}
-      (case (:contact-request-state message)
-        constants/contact-request-state-accepted
-        [quo/text {:style {:color colors/green}} (i18n/label :t/accepted)]
-        constants/contact-request-state-declined
-        [quo/text {:style {:color colors/red}} (i18n/label :t/declined)]
-        constants/contact-request-state-pending
-        [contact-request-actions (:message-id message)])]]))
+     (when (= type constants/activity-center-notification-type-contact-request)
+       [react/view {:style {:margin-right 20
+                            :margin-top 10
+                            :align-self :flex-end}}
+        (case (:contact-request-state message)
+          constants/contact-request-state-accepted
+          [quo/text {:style {:color colors/green}} (i18n/label :t/accepted)]
+          constants/contact-request-state-declined
+          [quo/text {:style {:color colors/red}} (i18n/label :t/declined)]
+          constants/contact-request-state-pending
+          [contact-request-actions (:message-id message)])])]))

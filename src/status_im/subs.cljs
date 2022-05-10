@@ -1077,8 +1077,8 @@
                (or
                 (not mutual-contact-requests-enabled?)
                 (get-in inputs [chat-id :metadata :sending-contact-request])
-                (and (get-in contacts [chat-id :added])
-                     (get-in contacts [chat-id :has-added-us])))
+                (and mutual-contact-requests-enabled?
+                     (= constants/contact-request-state-mutual (get-in contacts [chat-id :contact-request-state]))))
                (not (contains? blocked-users-set chat-id))))))))
 
 (re-frame/reg-sub
@@ -1937,6 +1937,7 @@
                    (or (and (= constants/activity-center-notification-type-one-to-one-chat type)
                             (not (nil? last-message)))
                        (= constants/activity-center-notification-type-contact-request type)
+                       (= constants/activity-center-notification-type-contact-request-retracted type)
                        (= constants/activity-center-notification-type-private-group-chat type)
                        (= constants/activity-center-notification-type-reply type)
                        (= constants/activity-center-notification-type-mention type)))
