@@ -151,7 +151,7 @@
 
 (views/defview nickname []
   (views/letsubs [{:keys [public-key names]} [:contacts/current-contact]]
-                 [nickname-view public-key names]))
+    [nickname-view public-key names]))
 
 (defn button-item [{:keys [icon label action selected disabled negative]}]
   [react/touchable-highlight {:on-press action :style {:flex 1}

@@ -31,7 +31,6 @@
             [taoensso.timbre :as log]
             [status-im.data-store.invitations :as data-store.invitations]
             [status-im.chat.models.link-preview :as link-preview]
-            [status-im.chat.models :as chat.models]
             [status-im.utils.mobile-sync :as utils.mobile-sync]
             [status-im.async-storage.core :as async-storage]
             [status-im.notifications-center.core :as notifications-center]
@@ -96,6 +95,13 @@
    (async-storage/get-item
     :wallet-connect-enabled?
     #(re-frame/dispatch [:multiaccounts.ui/switch-wallet-connect-enabled %]))))
+
+(re-frame/reg-fx
+ ::initialize-mutual-contact-requests
+ (fn []
+   (async-storage/get-item
+    :mutual-contact-requests-enabled?
+    #(re-frame/dispatch [:multiaccounts.ui/switch-mutual-contact-requests-enabled %]))))
 
 (defn rpc->accounts [accounts]
   (reduce (fn [acc {:keys [chat type wallet] :as account}]
@@ -362,6 +368,10 @@
   [cofx]
   {::initialize-wallet-connect nil})
 
+(fx/defn initialize-mutual-contact-requests
+  [cofx]
+  {::initialize-mutual-contact-requests nil})
+
 (fx/defn get-node-config-callback
   {:events [::get-node-config-callback]}
   [{:keys [db] :as cofx} node-config-json]
@@ -397,6 +407,7 @@
               (initialize-appearance)
               (initialize-communities-enabled)
               (initialize-wallet-connect)
+              (initialize-mutual-contact-requests)
               (get-node-config)
               (communities/fetch)
               (logging/set-log-level (:log-level multiaccount))

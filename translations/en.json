@@ -1761,5 +1761,6 @@
     "contact-request-declined": "Declined ⓧ",
     "contact-request-accepted": "Accepted ✓",
     "contact-request-pending": "Pending...",
-    "removed-from-contacts": "Removed from contacts"
+    "removed-from-contacts": "Removed from contacts",
+    "mutual-contact-requests": "Mutual contact requests"
 }

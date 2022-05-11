@@ -42,7 +42,6 @@
             [quo.design-system.colors :as colors]
             [status-im.ui.screens.profile.visibility-status.utils :as visibility-status-utils]))
 
-(def mutual-contact-requests-enabled? true)
 ;; TOP LEVEL ===========================================================================================================
 
 (defn reg-root-key-sub [sub-name db-key]
@@ -277,6 +276,8 @@
 (reg-root-key-sub :wallet-connect-legacy/sessions :wallet-connect-legacy/sessions)
 (reg-root-key-sub :wallet-connect/session-managed :wallet-connect/session-managed)
 (reg-root-key-sub :contact-requests/pending :contact-requests/pending)
+
+(reg-root-key-sub :mutual-contact-requests/enabled? :mutual-contact-requests/enabled?)
 
 (re-frame/reg-sub
  :communities
@@ -954,7 +955,6 @@
  (fn [ui-props [_ prop]]
    (get ui-props prop)))
 
-
 (re-frame/reg-sub
  :chats/current-chat-contact
  :<- [:contacts/contacts]
@@ -1056,7 +1056,8 @@
  :<- [:contacts/blocked-set]
  :<- [:contacts/contacts]
  :<- [:chat/inputs]
- (fn [[{:keys [group-chat chat-id] :as current-chat} my-public-key community blocked-users-set contacts inputs]]
+ :<- [:mutual-contact-requests/enabled?]
+ (fn [[{:keys [group-chat chat-id] :as current-chat} my-public-key community blocked-users-set contacts inputs mutual-contact-requests-enabled?]]
    (when current-chat
      (cond-> current-chat
        (chat.models/public-chat? current-chat)

@@ -120,62 +120,62 @@
 (views/defview communities-and-chats []
   (views/letsubs [{:keys [items search-filter]} [:home-items]
                   hide-home-tooltip? [:hide-home-tooltip?]]
-                 (if (and (empty? items)
-                          (empty? search-filter)
-                          hide-home-tooltip?
-                          (not @search-active?))
-                   [welcome-blank-page]
-                   [list/flat-list
-                    {:key-fn                       chat-list-key-fn
-                     :getItemLayout                get-item-layout
-                     :on-end-reached               #(re-frame/dispatch [:chat.ui/show-more-chats])
-                     :keyboard-should-persist-taps :always
-                     :data                         items
-                     :render-fn                    render-fn
-                     :header                       [:<>
-                                                    (when (or (seq items) @search-active? (seq search-filter))
-                                                      [search-input-wrapper search-filter (empty? items)])
-                                                    [referral-item/list-item]
-                                                    (when (and (empty? items)
-                                                               (or @search-active? (seq search-filter)))
-                                                      [start-suggestion search-filter])]
-                     :footer                       (if (and (not hide-home-tooltip?) (not @search-active?))
-                                                     [home-tooltip-view]
-                                                     [react/view {:height 68}])}])))
+    (if (and (empty? items)
+             (empty? search-filter)
+             hide-home-tooltip?
+             (not @search-active?))
+      [welcome-blank-page]
+      [list/flat-list
+       {:key-fn                       chat-list-key-fn
+        :getItemLayout                get-item-layout
+        :on-end-reached               #(re-frame/dispatch [:chat.ui/show-more-chats])
+        :keyboard-should-persist-taps :always
+        :data                         items
+        :render-fn                    render-fn
+        :header                       [:<>
+                                       (when (or (seq items) @search-active? (seq search-filter))
+                                         [search-input-wrapper search-filter (empty? items)])
+                                       [referral-item/list-item]
+                                       (when (and (empty? items)
+                                                  (or @search-active? (seq search-filter)))
+                                         [start-suggestion search-filter])]
+        :footer                       (if (and (not hide-home-tooltip?) (not @search-active?))
+                                        [home-tooltip-view]
+                                        [react/view {:height 68}])}])))
 
 (views/defview chats-list []
   (views/letsubs [loading? [:chats/loading?]]
-                 [:<>
-                  [connectivity/loading-indicator]
-                  (if loading?
-                    [react/view {:flex 1 :align-items :center :justify-content :center}
-                     [react/activity-indicator {:animating true}]]
-                    [communities-and-chats])]))
+    [:<>
+     [connectivity/loading-indicator]
+     (if loading?
+       [react/view {:flex 1 :align-items :center :justify-content :center}
+        [react/activity-indicator {:animating true}]]
+       [communities-and-chats])]))
 
 (views/defview plus-button []
   (views/letsubs [logging-in? [:multiaccounts/login]]
-                 [components.plus-button/plus-button
-                  {:on-press (when-not logging-in?
-                               #(re-frame/dispatch [:bottom-sheet/show-sheet :add-new {}]))
-                   :loading logging-in?
-                   :accessibility-label :new-chat-button}]))
+    [components.plus-button/plus-button
+     {:on-press (when-not logging-in?
+                  #(re-frame/dispatch [:bottom-sheet/show-sheet :add-new {}]))
+      :loading logging-in?
+      :accessibility-label :new-chat-button}]))
 
 (views/defview notifications-button []
   (views/letsubs [notif-count [:activity.center/notifications-count]]
-                 [react/view
-                  [quo/button {:type     :icon
-                               :style {:margin-left 10}
-                               :accessibility-label "notifications-button"
-                               :on-press #(do
-                                            (re-frame/dispatch [:mark-all-activity-center-notifications-as-read])
-                                            (re-frame/dispatch [:navigate-to :notifications-center]))
-                               :theme    :icon}
-                   :main-icons/notification]
-                  (when (pos? notif-count)
-                    [react/view {:style (merge (styles/counter-public-container) {:top 5 :right 5})
-                                 :pointer-events :none}
-                     [react/view {:style               styles/counter-public
-                                  :accessibility-label :notifications-unread-badge}]])]))
+    [react/view
+     [quo/button {:type     :icon
+                  :style {:margin-left 10}
+                  :accessibility-label "notifications-button"
+                  :on-press #(do
+                               (re-frame/dispatch [:mark-all-activity-center-notifications-as-read])
+                               (re-frame/dispatch [:navigate-to :notifications-center]))
+                  :theme    :icon}
+      :main-icons/notification]
+     (when (pos? notif-count)
+       [react/view {:style (merge (styles/counter-public-container) {:top 5 :right 5})
+                    :pointer-events :none}
+        [react/view {:style               styles/counter-public
+                     :accessibility-label :notifications-unread-badge}]])]))
 
 (defn home []
   (reagent/create-class

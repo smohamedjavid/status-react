@@ -37,8 +37,6 @@
             [status-im.ui.screens.chat.sheets :as sheets]
             [status-im.react-native.resources :as resources]))
 
-(def enable-mutual-contact-requests? true)
-
 (defn invitation-requests [chat-id admins]
   (let [current-pk @(re-frame/subscribe [:multiaccount/public-key])
         admin? (get admins current-pk)]
@@ -96,13 +94,13 @@
                           chat-type
                           group-chat
                           invitation-admin
+                          mutual-contact-requests-enabled?
                           contact-name
                           color
                           loading-messages?
                           no-messages?
                           contact-request-state
-                          emoji
-                          contact-added?]}]
+                          emoji]}]
   [react/view {:style (style/intro-header-container loading-messages? no-messages?)
                :accessibility-label :history-chat}
    ;; Icon section
@@ -134,7 +132,7 @@
        contact-name)])
    (when
     (and
-     enable-mutual-contact-requests?
+     mutual-contact-requests-enabled?
      (= chat-type constants/one-to-one-chat-type)
      (or
       (= contact-request-state constants/contact-request-state-none)
@@ -142,18 +140,17 @@
       (= contact-request-state constants/contact-request-state-dismissed)))
      [contact-request])])
 
-(defn chat-intro-one-to-one [{:keys [chat-id chat-type] :as opts}]
+(defn chat-intro-one-to-one [{:keys [chat-id] :as opts}]
   (let [contact       @(re-frame/subscribe
                         [:contacts/contact-by-identity chat-id])
+        mutual-contact-requests-enabled? @(re-frame/subscribe [:mutual-contact-requests/enabled?])
         contact-names @(re-frame/subscribe
                         [:contacts/contact-two-names-by-identity chat-id])]
-    (println "CONTACT" contact)
     [chat-intro (assoc opts
+                       :mutual-contact-requests-enabled? mutual-contact-requests-enabled?
                        :contact-name (first contact-names)
                        :contact-request-state (or (:contact-request-state contact)
-                                                  constants/contact-request-state-none)
-                       :contact-added? (and (= chat-type constants/one-to-one-chat-type)
-                                            @(re-frame/subscribe [:contacts/contact-added? chat-id])))]))
+                                                  constants/contact-request-state-none))]))
 
 (defn chat-intro-header-container
   [{:keys [group-chat invitation-admin
@@ -349,51 +346,56 @@
      :edit-enabled        edit-enabled
      :in-pinned-view?     in-pinned-view?}))
 
-(defn messages-view [{:keys [chat bottom-space pan-responder space-keeper show-input?]}]
+(defn messages-view [{:keys [chat
+                             bottom-space
+                             pan-responder
+                             mutual-contact-requests-enabled?
+                             space-keeper
+                             show-input?]}]
   (let [{:keys [group-chat chat-type chat-id public? community-id admins]} chat
 
         messages @(re-frame/subscribe [:chats/raw-chat-messages-stream chat-id])
         one-to-one?   (= chat-type constants/one-to-one-chat-type)
-        contact-added? (when one-to-one? @(re-frame/subscribe [:contacts/contact-added? chat-id]))]
-    (let [should-send-contact-request?
-          (and
-           enable-mutual-contact-requests?
-           one-to-one?
-           (not contact-added?))]
+        contact-added? (when one-to-one? @(re-frame/subscribe [:contacts/contact-added? chat-id]))
+        should-send-contact-request?
+        (and
+         mutual-contact-requests-enabled?
+         one-to-one?
+         (not contact-added?))]
 
-      ;;do not use anonymous functions for handlers
-      [list/flat-list
-       (merge
-        pan-responder
-        {:key-fn                       list-key-fn
-         :ref                          list-ref
-         :header                       [list-header chat]
-         :footer                       [list-footer chat]
-         :data                         (when-not should-send-contact-request?
-                                         messages)
-         :render-data                  (get-render-data {:group-chat      group-chat
-                                                         :chat-id         chat-id
-                                                         :public?         public?
-                                                         :community-id    community-id
-                                                         :admins          admins
-                                                         :space-keeper    space-keeper
-                                                         :show-input?     show-input?
-                                                         :edit-enabled    true
-                                                         :in-pinned-view? false})
-         :render-fn                    render-fn
-         :on-viewable-items-changed    on-viewable-items-changed
-         :on-end-reached               list-on-end-reached
-         :on-scroll-to-index-failed    identity              ;;don't remove this
-         :content-container-style      {:padding-top (+ bottom-space 16)
-                                        :padding-bottom 16}
-         :scroll-indicator-insets      {:top bottom-space}    ;;ios only
-         :keyboard-dismiss-mode        :interactive
-         :keyboard-should-persist-taps :handled
-         :onMomentumScrollBegin        state/start-scrolling
-         :onMomentumScrollEnd          state/stop-scrolling
-         ;;TODO https://github.com/facebook/react-native/issues/30034
-         :inverted                     (when platform/ios? true)
-         :style                        (when platform/android? {:scaleY -1})})])))
+    ;;do not use anonymous functions for handlers
+    [list/flat-list
+     (merge
+      pan-responder
+      {:key-fn                       list-key-fn
+       :ref                          list-ref
+       :header                       [list-header chat]
+       :footer                       [list-footer chat]
+       :data                         (when-not should-send-contact-request?
+                                       messages)
+       :render-data                  (get-render-data {:group-chat      group-chat
+                                                       :chat-id         chat-id
+                                                       :public?         public?
+                                                       :community-id    community-id
+                                                       :admins          admins
+                                                       :space-keeper    space-keeper
+                                                       :show-input?     show-input?
+                                                       :edit-enabled    true
+                                                       :in-pinned-view? false})
+       :render-fn                    render-fn
+       :on-viewable-items-changed    on-viewable-items-changed
+       :on-end-reached               list-on-end-reached
+       :on-scroll-to-index-failed    identity              ;;don't remove this
+       :content-container-style      {:padding-top (+ bottom-space 16)
+                                      :padding-bottom 16}
+       :scroll-indicator-insets      {:top bottom-space}    ;;ios only
+       :keyboard-dismiss-mode        :interactive
+       :keyboard-should-persist-taps :handled
+       :onMomentumScrollBegin        state/start-scrolling
+       :onMomentumScrollEnd          state/stop-scrolling
+       ;;TODO https://github.com/facebook/react-native/issues/30034
+       :inverted                     (when platform/ios? true)
+       :style                        (when platform/android? {:scaleY -1})})]))
 
 (defn topbar-button []
   (re-frame/dispatch [:bottom-sheet/show-sheet
@@ -424,17 +426,19 @@
       (let [{:keys [chat-id show-input? group-chat admins invitation-admin] :as chat}
             ;;we want to react only on these fields, do not use full chat map here
             @(re-frame/subscribe [:chats/current-chat-chat-view])
+            mutual-contact-requests-enabled? @(re-frame/subscribe [:mutual-contact-requests/enabled?])
             max-bottom-space (max @bottom-space @panel-space)]
         [:<>
          [connectivity/loading-indicator]
          (when chat-id
            (if group-chat
              [invitation-requests chat-id admins]
-             (when-not enable-mutual-contact-requests? [add-contact-bar chat-id])))
+             (when-not mutual-contact-requests-enabled? [add-contact-bar chat-id])))
          ;;MESSAGES LIST
          [messages-view {:chat          chat
                          :bottom-space  max-bottom-space
                          :pan-responder pan-responder
+                         :mutual-contact-requests-enabled? mutual-contact-requests-enabled?
                          :space-keeper  space-keeper
                          :show-input?   show-input?}]
          (when (and group-chat invitation-admin)
