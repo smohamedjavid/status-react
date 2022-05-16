@@ -130,7 +130,11 @@
 
 (defn right-button-options [id icon]
   {:id   id
-   :icon (icons/icon-source icon)})
+   :icon (icons/icon-source icon)
+   :iconBackground {:color "#EDF2F4"
+                    :cornerRadius 10
+                    :width 32
+                    :height 32}})
 
 (def screens
   (concat [;;INTRO, ONBOARDING, LOGIN
@@ -226,7 +230,8 @@
             :options       {:popGesture false
                             :topBar     {:title        {:component {:name :chat-toolbar :id :chat-toolbar}
                                                         :alignment :fill}
-                                         :rightButtons (right-button-options :chat :more)}}
+                                         :rightButtons [(right-button-options :chat-search :search)
+                                                        (right-button-options :chat :more)]}}
             :right-handler chat/topbar-button
             :component     chat/chat}
 
