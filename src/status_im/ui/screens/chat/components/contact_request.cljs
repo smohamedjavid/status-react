@@ -7,7 +7,8 @@
             [status-im.ethereum.stateofus :as stateofus]
             [status-im.ui.screens.chat.components.style :as styles]
             [re-frame.core :as re-frame]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  (:require-macros [status-im.utils.views :refer [defview letsubs]]))
 
 (def ^:private contact-request-symbol "↪ ")
 
@@ -49,18 +50,18 @@
   (let [{:keys [input-text]} @(re-frame/subscribe [:chats/current-chat-inputs])]
     [rn/view {:style {:flex-direction :row}}
      [rn/view {:style (styles/contact-request-content)}
-      [quo/button {:type     :secondary
+      [quo/button {:type            :secondary
                    :weight          :medium
                    :number-of-lines 1
                    :style           {:line-height 18}
-                   :on-press #(re-frame/dispatch [:chat.ui/cancel-contact-request])}
+                   :on-press        #(re-frame/dispatch [:chat.ui/cancel-contact-request])}
        (i18n/label :t/cancel)]
       [quo/button {:type     :secondary
                    :disabled (string/blank? input-text)
                    :weight   :medium
-                   :after :main-icons/send
+                   :after    :main-icons/send
                    :on-press #(re-frame/dispatch [:contacts/send-contact-request their-public-key input-text])
-                   :style           {:line-height 18}}
+                   :style    {:line-height 18}}
        (i18n/label :t/send-request)]]]))
 
 (defn focus-input-on-contact-request [contact-request had-contact-request text-input-ref]
@@ -77,10 +78,9 @@
                     :padding-vertical 8}}
    [contact-request-message contact-request]])
 
-(defn contact-request-message-auto-focus-wrapper [text-input-ref]
-  (let [had-reply (atom nil)]
-    (fn []
-      (let [contact-request @(re-frame/subscribe [:chats/sending-contact-request])]
-        (focus-input-on-contact-request contact-request had-reply text-input-ref)
-        (when contact-request
-          [contact-request-message-wrapper contact-request])))))
+(defview contact-request-message-auto-focus-wrapper [text-input-ref]
+  (letsubs [had-reply (atom nil)
+            contact-request @(re-frame/subscribe [:chats/sending-contact-request])]
+    {:component-did-mount #(focus-input-on-contact-request contact-request had-reply text-input-ref)}
+    (when contact-request
+      [contact-request-message-wrapper contact-request])))

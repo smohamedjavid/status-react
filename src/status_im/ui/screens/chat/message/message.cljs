@@ -637,42 +637,18 @@
    (i18n/label :t/contact-request-declined)])
 
 (defn contact-request-status-label [state]
-  [react/view {:style {:width 136
-                       :border-radius 8
-                       :flex 1
-                       :justify-content :center
-                       :align-items :center
-                       :background-color (when (= :retry state)
-                                           colors/blue-light)
-                       :border-width 1
-                       :border-color (case state
-                                       constants/contact-request-state-accepted colors/green-transparent-10
-                                       constants/contact-request-state-declined colors/red-light
-                                       constants/contact-request-state-pending colors/gray-lighter)
-                       :padding-vertical 10
-                       :padding-horizontal 16}}
-
+  [react/view {:style (style/contact-request-status-label state)}
    (case state
-     constants/contact-request-state-pending  [contact-request-status-pending]
-     constants/contact-request-state-accepted [contact-request-status-accepted]
-     constants/contact-request-state-declined [contact-request-status-declined])])
+     constants/contact-request-message-state-pending  [contact-request-status-pending]
+     constants/contact-request-message-state-accepted [contact-request-status-accepted]
+     constants/contact-request-message-state-declined [contact-request-status-declined])])
 
 (defmethod ->message constants/content-type-contact-request
   [{:keys [outgoing] :as message} _]
-  [react/view {:style {:width 168
-                       :min-height 224.71
-                       :border-radius 8
-                       :border-width 1
-                       :border-color colors/gray-lighter
-                       :align-items :center
-                       :padding-bottom 10
-                       :margin-vertical 4
-                       :align-self (if outgoing :flex-end :flex-start)
-                       :margin-right (if outgoing 8 0)
-                       :margin-left (if outgoing 0 8)}}
+  [react/view {:style (style/content-type-contact-request outgoing)}
    [react/image {:source (resources/get-image :hand-wave)
                  :style  {:width 112
-                          :height 96.71}}]
+                          :height 97}}]
    [quo/text {:style {:margin-top 6}
               :weight :bold
               :size   :large}

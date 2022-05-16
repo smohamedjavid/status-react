@@ -60,6 +60,13 @@
      (when (> (count events) 1)
        {:dispatch-n events}))))
 
+(defn- own-info
+  [db]
+  (let [{:keys [name preferred-name identicon address]} (:multiaccount db)]
+    {:name          (or preferred-name name)
+     :profile-image identicon
+     :address       address}))
+
 (fx/defn send-contact-request
   {:events [::send-contact-request]}
   [{:keys [db] :as cofx} public-key]

@@ -37,7 +37,7 @@
         sender (when message (first @(re-frame/subscribe [:contacts/contact-two-names-by-identity (message :from)])))]
     [react/view
      [react/touchable-opacity (merge {:style (styles/notification-container read)} opts)
-      [react/view
+      [react/view {:style {:flex 1}}
        (when (or
               (= type constants/activity-center-notification-type-contact-request)
               (= type constants/activity-center-notification-type-contact-request-retracted))
@@ -58,7 +58,7 @@
            {:size 40
             :accessibility-label :current-account-photo}]]
          [chat-icon.screen/chat-icon-view chat-id group-chat chat-name
-          {:container              styles/photo-container
+          {:container              (styles/photo-container false)
            :size                   40
            :chat-icon              chat-icon.styles/chat-icon-chat-list
            :default-chat-icon      (chat-icon.styles/default-chat-icon-chat-list color)

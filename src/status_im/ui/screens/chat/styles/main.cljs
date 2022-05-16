@@ -147,3 +147,10 @@
   {:font-size 13
    :line-height 18
    :text-align :center})
+
+(def contact-request
+  {:width            "100%"
+   :justify-content  :center
+   :align-items      :center
+   :border-top-width 1
+   :border-color     colors/gray-transparent-10})

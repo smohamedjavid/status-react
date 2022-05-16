@@ -31,6 +31,7 @@ nix_install_type() {
         echo "No Nix installtion detected!" >&2
         echo "none"
     else
-        echo "single"
+        echo "Unknown Nix installtion type!" >&2
+        exit 1
     fi
 }

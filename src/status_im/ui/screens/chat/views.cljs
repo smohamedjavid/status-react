@@ -64,11 +64,7 @@
 
 (defn contact-request []
   (let [contact-request @(re-frame/subscribe [:chats/sending-contact-request])]
-    [react/view {:style {:width "100%"
-                         :justify-content :center
-                         :align-items :center
-                         :border-top-width 1
-                         :border-color colors/gray-transparent-10}}
+    [react/view {:style style/contact-request}
      [react/image {:source (resources/get-image :hand-wave)
                    :style  {:width 112
                             :height 96.71

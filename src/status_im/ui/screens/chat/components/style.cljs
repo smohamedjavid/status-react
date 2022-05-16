@@ -14,7 +14,7 @@
 (defn input-container [contact-request]
   {:background-color           (:ui-01 @colors/theme)
    :flex                       1
-   :height (when contact-request 44)
+   :height                     (when contact-request 44)
    :border-top-left-radius     (if contact-request 8 16)
    :border-top-right-radius    (if contact-request 8 16)
    :border-bottom-right-radius (if contact-request 8 4)
