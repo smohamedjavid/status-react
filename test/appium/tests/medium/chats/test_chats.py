@@ -5,9 +5,20 @@ import pytest
 
 from tests import marks
 from tests.users import ens_user
-from tests.base_test_case import create_shared_drivers, MultipleSharedDeviceTestCase
+from tests.base_test_case import create_shared_drivers, MultipleSharedDeviceTestCase, MultipleDeviceTestCase
 from views.sign_in_view import SignInView
 
+from views.chat_view import CommunityView
+import pytest
+from tests import marks
+from tests.base_test_case import MultipleSharedDeviceTestCase, create_shared_drivers
+from views.sign_in_view import SignInView
+import time
+from tests import bootnode_address, mailserver_address, mailserver_ams,  mailserver_hk, used_fleet, common_password
+from tests.users import transaction_senders, basic_user, ens_user
+from tests import marks
+from tests.base_test_case import MultipleDeviceTestCase
+from views.sign_in_view import SignInView
 
 @pytest.mark.xdist_group(name="two_2")
 @marks.medium
@@ -17,15 +28,18 @@ class TestPublicChatMultipleDeviceMergedMedium(MultipleSharedDeviceTestCase):
         cls.drivers, cls.loop = create_shared_drivers(2)
         device_1, device_2 = SignInView(cls.drivers[0]), SignInView(cls.drivers[1])
         cls.home_1, cls.home_2 = device_1.create_user(), device_2.create_user()
-        profile_1 = cls.home_1.profile_button.click()
-        cls.public_key_1, cls.username_1 = profile_1.get_public_key_and_username(return_username=True)
-        profile_1.home_button.click()
+        cls.profile_1, cls.profile_2 = cls.home_1.profile_button.click(), cls.home_2.profile_button.click()
+        cls.public_key_1, cls.username_1 = cls.profile_1.get_public_key_and_username(return_username=True)
+        cls.public_key_2, cls.username_2 = cls.profile_2.get_public_key_and_username(return_username=True)
         cls.text_message = 'hello'
         [home.home_button.click() for home in (cls.home_1, cls.home_2)]
         cls.public_chat_name = cls.home_1.get_random_chat_name()
         cls.chat_1, cls.chat_2 = cls.home_1.join_public_chat(cls.public_chat_name), cls.home_2.join_public_chat(
             cls.public_chat_name)
         cls.chat_1.send_message(cls.text_message)
+        [home.home_button.click() for home in (cls.home_1, cls.home_2)]
+        cls.home_1.add_contact(cls.public_key_2, add_in_contacts=False)
+        cls.home_2.add_contact(cls.public_key_1, add_in_contacts=False)
 
     @marks.testrail_id(6342)
     def test_public_chat_timeline_different_statuses_reaction(self):
@@ -61,7 +75,7 @@ class TestPublicChatMultipleDeviceMergedMedium(MultipleSharedDeviceTestCase):
 
         self.home_2.just_fyi('Check that can see user status without adding him as contact')
         self.home_2.home_button.click()
-        chat_2 = self.home_2.add_contact(self.public_key_1, add_in_contacts=False)
+        chat_2 = self.home_2.get_chat(self.username_1).click()
         chat_2.chat_options.click()
         timeline_2 = chat_2.view_profile_button.click()
         if not timeline_2.image_message_in_chat.is_element_displayed(40):
@@ -131,7 +145,52 @@ class TestPublicChatMultipleDeviceMergedMedium(MultipleSharedDeviceTestCase):
         if public_chat_2.chat_element_by_text(text_status).is_element_displayed(10):
             self.errors.append("Statuses of removed user are still shown in profile")
 
+        self.errors.verify_no_errors()\
+
+
+    def test_profile_custom_bootnodes_enable_disable(self):
+        self.home_1.profile_button.click()
+        self.profile_1.just_fyi('Add custom bootnode, enable bootnodes and check validation')
+        self.profile_1.advanced_button.click()
+        self.profile_1.bootnodes_button.click()
+        self.profile_1.add_bootnode_button.click()
+        self.profile_1.specify_name_input.set_value('test')
+        # TODO: blocked as validation is missing for bootnodes (rechecked 23.11.21, valid)
+        # profile_1.bootnode_address_input.set_value('invalid_bootnode_address')
+        # if not profile_1.element_by_text_part('Invalid format').is_element_displayed():
+        #      self.errors.append('Validation message about invalid format of bootnode is not shown')
+        # profile_1.save_button.click()
+        # if profile_1.add_bootnode_button.is_element_displayed():
+        #      self.errors.append('User was navigated to another screen when tapped on disabled "Save" button')
+        # profile_1.bootnode_address_input.clear()
+        self.profile_1.bootnode_address_input.set_value(bootnode_address)
+        self.profile_1.save_button.click()
+        self.profile_1.enable_bootnodes.click()
+        self.profile_1.home_button.double_click()
+
+        self.profile_1.just_fyi('Add contact and send first message with enabled custom bootnodes')
+        chat_1 = self.home_1.get_chat(self.username_2).click()
+        message = 'test message'
+        chat_1.send_message(message)
+        chat_2 = self.home_2.get_chat(self.username_1).click()
+        chat_2.chat_element_by_text(message).wait_for_visibility_of_element()
+
+        self.profile_1.just_fyi('Disable custom bootnodes')
+        chat_1.profile_button.click()
+        self.profile_1.advanced_button.click()
+        self.profile_1.bootnodes_button.click()
+        self.profile_1.enable_bootnodes.click()
+        self.profile_1.home_button.click()
+
+        self.profile_1.just_fyi('Send message and check that it is received after disabling bootnodes')
+        self.home_1.get_chat(self.username_2).click()
+        message_1 = 'new message'
+        chat_1.send_message(message_1)
+        for chat in chat_1, chat_2:
+            if not chat.chat_element_by_text(message_1).is_element_displayed():
+                self.errors.append('Message was not received after enabling bootnodes!')
         self.errors.verify_no_errors()
+
 
 
 @pytest.mark.xdist_group(name="three_2")
@@ -674,4 +733,246 @@ class TestGroupChatMultipleDevice(MultipleSharedDeviceTestCase):
         for chat in (self.chats[1], self.chats[0]):
             if not chat.chat_element_by_text(join_system_message).is_element_displayed():
                 self.errors.append('%s is not shown after joining to group chat via invite' % join_system_message)
+        self.errors.verify_no_errors()
+
+
+class TestChatManagementMultipleDevice(MultipleDeviceTestCase):
+
+    # @marks.testrail_id(5432)
+    # @marks.medium
+    # # TODO: can be united with other 2-driver profile e2e
+    # def test_profile_custom_bootnodes(self):
+    #     self.create_drivers(2)
+    #     home_1, home_2 = SignInView(self.drivers[0]).create_user(), SignInView(self.drivers[1]).create_user()
+    #     public_key = home_2.get_public_key_and_username()
+    #
+    #     profile_1, profile_2 = home_1.profile_button.click(), home_2.profile_button.click()
+    #     username_1, username_2 = profile_1.default_username_text.text, profile_2.default_username_text.text
+    #
+    #     profile_1.just_fyi('Add custom bootnode, enable bootnodes and check validation')
+    #     profile_1.advanced_button.click()
+    #     profile_1.bootnodes_button.click()
+    #     profile_1.add_bootnode_button.click()
+    #     profile_1.specify_name_input.set_value('test')
+    #     # TODO: blocked as validation is missing for bootnodes (rechecked 23.11.21, valid)
+    #     # profile_1.bootnode_address_input.set_value('invalid_bootnode_address')
+    #     # if not profile_1.element_by_text_part('Invalid format').is_element_displayed():
+    #     #      self.errors.append('Validation message about invalid format of bootnode is not shown')
+    #     # profile_1.save_button.click()
+    #     # if profile_1.add_bootnode_button.is_element_displayed():
+    #     #      self.errors.append('User was navigated to another screen when tapped on disabled "Save" button')
+    #     # profile_1.bootnode_address_input.clear()
+    #     profile_1.bootnode_address_input.set_value(bootnode_address)
+    #     profile_1.save_button.click()
+    #     profile_1.enable_bootnodes.click()
+    #     profile_1.home_button.click()
+    #
+    #     profile_1.just_fyi('Add contact and send first message')
+    #     chat_1 = home_1.add_contact(public_key)
+    #     message = 'test message'
+    #     chat_1.chat_message_input.send_keys(message)
+    #     chat_1.send_message_button.click()
+    #     profile_2.home_button.click()
+    #     chat_2 = home_2.get_chat(username_1).click()
+    #     chat_2.chat_element_by_text(message).wait_for_visibility_of_element()
+    #     chat_2.add_to_contacts.click()
+    #
+    #     profile_1.just_fyi('Disable custom bootnodes')
+    #     chat_1.profile_button.click()
+    #     profile_1.advanced_button.click()
+    #     profile_1.bootnodes_button.click()
+    #     profile_1.enable_bootnodes.click()
+    #     profile_1.home_button.click()
+    #
+    #     profile_1.just_fyi('Send message and check that it is received after disabling bootnodes')
+    #     home_1.get_chat(username_2).click()
+    #     message_1 = 'new message'
+    #     chat_1.chat_message_input.send_keys(message_1)
+    #     chat_1.send_message_button.click()
+    #     for chat in chat_1, chat_2:
+    #         if not chat.chat_element_by_text(message_1).is_element_displayed():
+    #             self.errors.append('Message was not received after enabling bootnodes!')
+    #     self.errors.verify_no_errors()
+
+
+    @marks.testrail_id(5436)
+    @marks.flaky
+    # TODO: can be united with other 2-driver profile e2e
+    def test_profile_add_switch_delete_custom_history_node(self):
+        self.create_drivers(2)
+        sign_in_1, sign_in_2 = SignInView(self.drivers[0]), SignInView(self.drivers[1])
+        home_1, home_2 = sign_in_1.create_user(), sign_in_2.create_user()
+        public_key = home_2.get_public_key_and_username()
+        home_2.home_button.click()
+
+        profile_1 = home_1.profile_button.click()
+        username_1 = profile_1.default_username_text.text
+
+        profile_1.just_fyi('disable autoselection')
+        profile_1.sync_settings_button.click()
+        profile_1.mail_server_button.click()
+        mailserver = profile_1.return_mailserver_name(mailserver_hk, used_fleet)
+        profile_1.mail_server_auto_selection_button.click()
+        profile_1.mail_server_by_name(mailserver).click()
+        profile_1.confirm_button.click()
+
+        profile_1.just_fyi('add custom mailserver (check address/name validation) and connect to it')
+        profile_1.plus_button.click()
+        server_name = 'test'
+        profile_1.save_button.click()
+        if profile_1.element_by_text(mailserver).is_element_displayed():
+            self.errors.append('Could add custom mailserver with empty address and name')
+        profile_1.specify_name_input.set_value(server_name)
+        profile_1.mail_server_address_input.set_value(mailserver_address[:-3])
+        profile_1.save_button.click()
+        if not profile_1.element_by_text_part("Invalid format").is_element_displayed():
+            self.errors.append('could add custom mailserver with invalid address')
+        profile_1.mail_server_address_input.clear()
+        profile_1.mail_server_address_input.set_value(mailserver_address)
+        profile_1.save_button.click()
+        profile_1.mail_server_by_name(server_name).click()
+        profile_1.mail_server_connect_button.click()
+        profile_1.confirm_button.click()
+        if profile_1.element_by_text_part("Error connecting").is_element_displayed(40):
+            profile_1.retry_to_connect_to_mailserver()
+        profile_1.get_back_to_home_view()
+        profile_1.home_button.click()
+
+        profile_1.just_fyi('start chat with user2 and check that all messages are delivered')
+        chat_1 = home_1.add_contact(public_key)
+        message = 'test message'
+        chat_1.chat_message_input.send_keys(message)
+        chat_1.send_message_button.click()
+        chat_2 = home_2.get_chat(username_1).click()
+        chat_2.chat_element_by_text(message).wait_for_visibility_of_element()
+        message_1 = 'new message'
+        chat_2.chat_message_input.send_keys(message_1)
+        chat_2.send_message_button.click()
+        chat_1.chat_element_by_text(message_1).wait_for_visibility_of_element()
+
+        profile_1.just_fyi('delete custom mailserver')
+        chat_1.profile_button.click()
+        profile_1.sync_settings_button.click()
+        profile_1.mail_server_button.click()
+        profile_1.element_by_text(mailserver).scroll_to_element()
+        profile_1.element_by_text(mailserver).click()
+        profile_1.confirm_button.click()
+        profile_1.element_by_text(server_name).scroll_to_element()
+        profile_1.element_by_text(server_name).click()
+        profile_1.mail_server_delete_button.scroll_to_element()
+        profile_1.mail_server_delete_button.click()
+        profile_1.mail_server_confirm_delete_button.click()
+        if profile_1.element_by_text(server_name).is_element_displayed():
+            self.errors.append('Deleted custom mailserver is shown')
+        profile_1.get_back_to_home_view()
+        profile_1.relogin()
+        chat_1.profile_button.click()
+        profile_1.sync_settings_button.click()
+        profile_1.mail_server_button.click()
+        if profile_1.element_by_text(server_name).is_element_displayed():
+            self.errors.append('Deleted custom mailserver is shown after relogin')
+
+        self.errors.verify_no_errors()
+
+
+    @marks.testrail_id(5767)
+    # TODO: can be united with other 2-driver profile e2e
+    def test_profile_can_not_connect_to_history_node(self):
+        self.create_drivers(2)
+        home_1, home_2 = SignInView(self.drivers[0]).create_user(), SignInView(self.drivers[1]).create_user()
+        profile_1 = home_1.profile_button.click()
+
+        profile_1.just_fyi('add non-working mailserver and connect to it')
+        profile_1.sync_settings_button.click()
+        profile_1.mail_server_button.click()
+        profile_1.mail_server_auto_selection_button.click()
+        profile_1.plus_button.click()
+        server_name = 'test'
+        profile_1.specify_name_input.set_value(server_name)
+        profile_1.mail_server_address_input.set_value('%s%s' % (mailserver_address[:-3], '553'))
+        profile_1.save_button.click()
+        profile_1.mail_server_by_name(server_name).click()
+        profile_1.mail_server_connect_button.wait_and_click()
+        profile_1.confirm_button.wait_and_click()
+
+        profile_1.just_fyi('check that popup "Error connecting" will not reappear if tap on "Cancel"')
+        profile_1.element_by_translation_id('mailserver-error-title').wait_for_element(120)
+        profile_1.cancel_button.click()
+
+        home_2.just_fyi('send several messages to public channel')
+        public_chat_name = home_2.get_random_chat_name()
+        message = 'test_message'
+        public_chat_2 = home_2.join_public_chat(public_chat_name)
+        public_chat_2.chat_message_input.send_keys(message)
+        public_chat_2.send_message_button.click()
+        public_chat_2.back_button.click()
+
+        profile_1.just_fyi('join same public chat and try to reconnect via "Tap to reconnect" and check "Connecting"')
+        profile_1.home_button.click()
+        public_chat_1 = home_1.join_public_chat(public_chat_name)
+        public_chat_1.reopen_app()
+
+        profile_1.just_fyi('check that still connected to custom mailserver after relogin')
+        home_1.profile_button.click()
+        profile_1.sync_settings_button.click()
+        if not profile_1.element_by_text(server_name).is_element_displayed():
+            self.drivers[0].fail("Not connected to custom mailserver after re-login")
+
+        profile_1.just_fyi('check that can RETRY to connect')
+        profile_1.element_by_translation_id('mailserver-error-title').wait_for_element(120)
+        public_chat_1.element_by_translation_id('mailserver-retry', uppercase=True).wait_and_click(60)
+
+        profile_1.just_fyi('check that can pick another mailserver and receive messages')
+        profile_1.element_by_translation_id('mailserver-error-title').wait_for_element(120)
+        profile_1.element_by_translation_id('mailserver-pick-another', uppercase=True).wait_and_click(120)
+        mailserver = profile_1.return_mailserver_name(mailserver_ams, used_fleet)
+        profile_1.element_by_text(mailserver).click()
+        profile_1.confirm_button.click()
+        profile_1.home_button.click()
+        home_1.get_chat('#%s' % public_chat_name).click()
+        if not public_chat_1.chat_element_by_text(message).is_element_displayed(60):
+            self.errors.append("Chat history wasn't fetched")
+
+        self.errors.verify_no_errors()
+
+
+    @marks.testrail_id(6332)
+    # TODO: can be united with other 2-driver profile e2e
+    def test_profile_disable_use_history_node(self):
+        self.create_drivers(2)
+        home_1, home_2 = SignInView(self.drivers[0]).create_user(), SignInView(self.drivers[1]).create_user()
+        profile_1 = home_1.profile_button.click()
+
+        home_2.just_fyi('send several messages to public channel')
+        public_chat_name = home_2.get_random_chat_name()
+        message, message_no_history = 'test_message', 'history node is disabled'
+        public_chat_2 = home_2.join_public_chat(public_chat_name)
+        public_chat_2.send_message(message)
+
+        profile_1.just_fyi(
+            'disable use_history_node and check that no history is fetched but you can still send messages')
+        profile_1.sync_settings_button.click()
+        profile_1.mail_server_button.click()
+        profile_1.use_history_node_button.click()
+        profile_1.home_button.click()
+        public_chat_1 = home_1.join_public_chat(public_chat_name)
+        if public_chat_1.chat_element_by_text(message).is_element_displayed(30):
+            self.errors.append('Chat history was fetched when use_history_node is disabled')
+        public_chat_1.send_message(message_no_history)
+        if not public_chat_2.chat_element_by_text(message_no_history).is_element_displayed(30):
+            self.errors.append('Message sent when use_history_node is disabled was not received')
+        public_chat_1.profile_button.click()
+        profile_1.relogin()
+        home_1.get_chat('#%s' % public_chat_name).click()
+        if public_chat_1.chat_element_by_text(message).is_element_displayed(30):
+            self.drivers[0].fail('History was fetched after relogin when use_history_node is disabled')
+
+        profile_1.just_fyi('enable use_history_node and check that history is fetched')
+        home_1.profile_button.click()
+        profile_1.sync_settings_button.click()
+        profile_1.mail_server_button.click()
+        profile_1.use_history_node_button.click()
+        profile_1.home_button.click(desired_view='chat')
+        if not public_chat_1.chat_element_by_text(message).is_element_displayed(60):
+            self.errors.append('History was not fetched after enabling use_history_node')
         self.errors.verify_no_errors()

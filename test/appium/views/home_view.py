@@ -239,7 +239,7 @@ class HomeView(BaseView):
             chat_in_ac = ActivityCenterChatElement(self.driver, username[:25])
             chat_in_ac.wait_for_element(20)
             chat_in_ac.click()
-            self.home_button.double_click()
+#            self.home_button.double_click()
         return chat_element
 
     def get_chat_from_home_view(self, username):
